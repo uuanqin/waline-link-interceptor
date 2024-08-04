@@ -1,0 +1,25 @@
+{
+  "name": "waline-link-interceptor",
+  "version": "0.0.1",
+  "description": "A plugin of Waline Comment System which can add an intercept page for external links in comments.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uuanqin/waline-link-interceptor.git"
+  },
+  "keywords": [
+    "waline",
+    "plugin",
+    "link",
+    "interceptor"
+  ],
+  "author": "wuanqin <wuanqin@mail.ustc.edu.cn>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/uuanqin/waline-link-interceptor/issues"
+  },
+  "homepage": "https://github.com/uuanqin/waline-link-interceptor#readme"
+}
