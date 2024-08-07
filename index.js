@@ -11,7 +11,12 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                     return next();
                 }
 
-                function isValidUrl(url) {
+                /**
+                 * Black and white list judgment logic
+                 * @param url
+                 * @returns {boolean|*}
+                 */
+                function isDisallowedUrl(url) {
                     const host = (new URL(url)).host;
                     if (host === ctx.host) {
                         return true;
@@ -43,6 +48,11 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
 
                 }
 
+                /**
+                 * In-comment link handler function
+                 * @param text
+                 * @returns {*}
+                 */
                 function replaceUrl(text) {
                     return text.replace(/href\=\"([^"#]+)\"/g, (originText, url) => {
 
@@ -52,7 +62,7 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                             return 'url='+encodeURIComponent(url);
                         }
 
-                        if (isValidUrl(url)) {
+                        if (isDisallowedUrl(url)) {
                             return originText;
                         }
 
@@ -60,13 +70,52 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                     });
                 }
 
+                /**
+                 * Avatar link handler function
+                 * @param link
+                 * @returns {string}
+                 */
+                function replaceLink(link) {
+                    // Null link
+                    if (!link) {
+                        return "";
+                    }
+
+                    // Add protocol
+                    const pattern = /^https?:\/\//;
+                    if (!pattern.test(link)) {
+                        link =  'https://' + link;
+                    }
+
+                    // validate URL
+                    try {
+                        new URL(link)
+                    } catch (e) {
+                        return "";
+                    }
+
+                    if (isDisallowedUrl(link)) {
+                        return link;
+                    }
+
+                    const redirectToo = redirectUrl ? redirectUrl : `${ctx.protocol}://${ctx.host}/api/redirect`;
+
+                    const encodeFuncc = encodeFunc ? encodeFunc : (url) => {
+                        return 'url=' + encodeURIComponent(url);
+                    }
+                    return `${redirectToo}?${encodeFuncc(link)}`;
+                }
+
+
                 const _oldSuccess = ctx.success;
                 const newSuccess = function (data) {
                     (Array.isArray(data) ? data : data.data).forEach(comment => {
                         comment.comment = replaceUrl(comment.comment);
+                        comment.link = replaceLink(comment.link);
                         if (Array.isArray(comment.children) && comment.children.length) {
                             comment.children.forEach(cmt => {
                                 cmt.comment = replaceUrl(cmt.comment);
+                                cmt.link = replaceLink(cmt.link);
                             });
                         }
                     });

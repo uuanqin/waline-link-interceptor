@@ -1,6 +1,6 @@
 # waline-link-interceptor
 
-A plugin of Waline Comment System which can add an intercept page for external links in comments.
+A plugin of Waline Comment System which can add an intercept page for external links in comments or the nickname. 
 
 ## Install
 
@@ -32,11 +32,32 @@ module.exports = Waline({
 });
 ```
 
+Options:
+- `whiteList` (optional): List of allowed domains and subdomains.
+- `blackList` (optional): List of disallowed domains and subdomains.
+- `interceptorTemplate` (optional): Html template of the middle page.
+- `redirectUrl` (optional): The url of the middle page.
+- `encodeFunc` (optional): Encoding function of external link.
+
+Example: If the url of the middle page is `https://example.com/go.html?u=https://external-link.com`, the options will be:
+
+```js
+LinkInterceptor({
+    whiteList: [
+        'example.com'
+    ],
+    redirectUrl: `https://example.com/go.html`,
+    encodeFunc: (url) =>{
+        return "u="+url;
+    }
+})
+```
+
 More instructions can be seen on [this article](https://uuanqin.top/p/e1ee5eca/) (Chinese).
 
 ## Related Plugins
 
-This plugin is based on [@waline-plugins/link-interceptor](https://github.com/uuanqin/plugins/tree/master/packages/link-interceptor).
+This plugin is based on [@waline-plugins/link-interceptor](https://github.com/walinejs/plugins/tree/master/packages/link-interceptor).
 
 ## License
 
