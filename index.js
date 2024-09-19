@@ -1,4 +1,4 @@
-module.exports = function ({whiteList, blackList, interceptorTemplate, redirectUrl , encodeFunc}) {
+module.exports = function ({whiteList, blackList, interceptorTemplate, redirectUrl, encodeFunc}) {
     return {
         middlewares: [
             async (ctx, next) => {
@@ -27,7 +27,7 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
 
                     // Domain Name Match Logic
                     const matchFunction = (e) => {
-                        const e_str = e.replace(/\./g,'\\.').replace(/\*/g, '.*');
+                        const e_str = e.replace(/\./g, '\\.').replace(/\*/g, '.*');
                         const regex = new RegExp(`${e_str}|([a-z0-9]+\\.)*${e_str}`);
                         return regex.test(host);
                     }
@@ -54,19 +54,23 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                  * @returns {*}
                  */
                 function replaceUrl(text) {
-                    return text.replace(/href\=\"([^"#]+)\"/g, (originText, url) => {
+                    return text.replace(/href="([^"#]+)(#[^"]+)?"/g, (originText, url, hashtag) => {
 
-                        const redirectToo = redirectUrl ? redirectUrl :`${ctx.protocol}://${ctx.host}/api/redirect`;
+                        const redirectToo = redirectUrl ? redirectUrl : `${ctx.protocol}://${ctx.host}/api/redirect`;
 
-                        const encodeFuncc = encodeFunc ? encodeFunc :  (url) =>{
-                            return 'url='+encodeURIComponent(url);
+                        const encodeFuncc = encodeFunc ? encodeFunc : (url) => {
+                            return 'url=' + encodeURIComponent(url);
                         }
 
                         if (isDisallowedUrl(url)) {
                             return originText;
                         }
 
-                        return `href="${redirectToo}?${encodeFuncc(url)}"`;
+                        if (hashtag === undefined) {
+                            hashtag = "";
+                        }
+
+                        return `href="${redirectToo}?${encodeFuncc(url + hashtag)}"`;
                     });
                 }
 
@@ -84,7 +88,7 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                     // Add protocol
                     const pattern = /^https?:\/\//;
                     if (!pattern.test(link)) {
-                        link =  'https://' + link;
+                        link = 'https://' + link;
                     }
 
                     // validate URL
@@ -108,7 +112,8 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
 
 
                 const _oldSuccess = ctx.success;
-                const newSuccess = function (data) {
+
+                ctx.success = function (data) {
                     (Array.isArray(data) ? data : data.data).forEach(comment => {
                         comment.comment = replaceUrl(comment.comment);
                         comment.link = replaceLink(comment.link);
@@ -121,8 +126,8 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                     });
 
                     _oldSuccess.call(ctx, data);
-                }
-                ctx.success = newSuccess;
+                };
+
                 await next();
             },
             async (ctx, next) => {

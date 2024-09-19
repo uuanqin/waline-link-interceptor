@@ -1,6 +1,6 @@
 {
   "name": "waline-link-interceptor",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A plugin of Waline Comment System which can add an intercept page for external links in comments or the nickname.",
   "main": "index.js",
   "scripts": {
