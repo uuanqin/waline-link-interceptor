@@ -1,18 +1,16 @@
 # waline-link-interceptor
 
-A plugin of Waline Comment System which can add an intercept page for external links in comments or the nickname. 
-
 Waline 评论系统中间页插件。
 
-Language: English | [中文](./README_zh.md)
+Language: [English](./README.md) | 中文
 
-## Install
+## 安装
 
 ```shell
 npm i waline-link-interceptor
 ```
 
-## Use
+## 使用
 
 ```javascript
 // index.js
@@ -36,14 +34,14 @@ module.exports = Waline({
 });
 ```
 
-Options:
-- `whiteList` (optional): List of allowed domains and subdomains.
-- `blackList` (optional): List of disallowed domains and subdomains.
-- `interceptorTemplate` (optional): Html template of the middle page.
-- `redirectUrl` (optional): The url of the middle page.
-- `encodeFunc` (optional): Encoding function of external link.
+配置选项：
+- `whiteList` （可选）: 域名白名单
+- `blackList` （可选）: 域名黑名单
+- `interceptorTemplate` （可选）: 中间页模板
+- `redirectUrl` （可选）: 中间页链接
+- `encodeFunc` （可选）: 外部链接编码方式
 
-Example: If the url of the middle page is `https://example.com/go.html?u=https://external-link.com`, the options will be:
+例子：假设中间页的形式为 `https://example.com/go.html?u=https://external-link.com` ，我们可以这样配置选项:
 
 ```js
 LinkInterceptor({
@@ -57,11 +55,11 @@ LinkInterceptor({
 })
 ```
 
-More instructions can be seen on [this article](https://uuanqin.top/p/e1ee5eca/) (Chinese).
+更多案例及说明详见 [这篇文章](https://uuanqin.top/p/e1ee5eca/)。
 
-## Related Plugins
+## 相关插件
 
-This plugin is based on [@waline-plugins/link-interceptor](https://github.com/walinejs/plugins/tree/master/packages/link-interceptor).
+本插件基于 [@waline-plugins/link-interceptor](https://github.com/walinejs/plugins/tree/master/packages/link-interceptor) 二次开发。
 
 ## License
 
