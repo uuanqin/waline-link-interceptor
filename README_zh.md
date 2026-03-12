@@ -37,8 +37,8 @@ module.exports = Waline({
 配置选项：
 - `whiteList` （可选）: 域名白名单
 - `blackList` （可选）: 域名黑名单
-- `interceptorTemplate` （可选）: 中间页模板
-- `redirectUrl` （可选）: 中间页链接
+- `interceptorTemplate` （可选）: 中间页模板。你也可以在环境变量 `INTERCEPTOR_TEMPLATE` 中进行配置。
+- `redirectUrl` （可选）: 中间页链接。你也可以在环境变量 `INTERCEPTOR_REDIRECT_URL` 中进行配置。
 - `encodeFunc` （可选）: 外部链接编码方式
 
 例子：假设中间页的形式为 `https://example.com/go.html?u=https://external-link.com` ，我们可以这样配置选项:
@@ -54,6 +54,8 @@ LinkInterceptor({
     }
 })
 ```
+
+环境变量中的配置项优先级高于插件中的配置项。如果你是在 Vercel 上部署 Waline，在修改环境变量后记得重新部署。
 
 更多案例及说明详见 [这篇文章](https://uuanqin.top/p/e1ee5eca/)。
 

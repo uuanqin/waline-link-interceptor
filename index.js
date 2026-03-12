@@ -1,7 +1,28 @@
 module.exports = function ({whiteList, blackList, interceptorTemplate, redirectUrl, encodeFunc}) {
+
+    const defaultEncodeFunc = (url) => 'url=' + encodeURIComponent(url);
+    const activeEncodeFunc = encodeFunc || defaultEncodeFunc;
+
+    const compileDomainRules = (rules) => {
+        if (!Array.isArray(rules)) return null;
+        return rules.map(rule => {
+            const safeRule = rule.replace(/\./g, '\\.').replace(/\*/g, '.*');
+            try {
+                return new RegExp(`^(?:${safeRule}|(?:[a-z0-9-]+\\.)*${safeRule})$`, 'i');
+            } catch (e) {
+                console.error(`Invalid domain rule: ${rule}`, e);
+                return null;
+            }
+        }).filter(r => r !== null);
+    };
+
+    const whiteListRegex = compileDomainRules(whiteList);
+    const blackListRegex = compileDomainRules(blackList);
+
     return {
         middlewares: [
             async (ctx, next) => {
+                const {INTERCEPTOR_REDIRECT_URL} = process.env;
                 if (ctx.path.toLowerCase() !== '/api/comment' || ctx.method.toUpperCase() !== 'GET') {
                     return next();
                 }
@@ -16,36 +37,30 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                  * @param url
                  * @returns {boolean|*}
                  */
-                function isDisallowedUrl(url) {
+                function isAllowedUrl(url) {
                     const host = (new URL(url)).host;
+
                     if (host === ctx.host) {
                         return true;
                     }
+                    const inWhiteList = whiteListRegex?.some(reg => reg.test(host));
+                    const inBlackList = blackListRegex?.some(reg => reg.test(host));
+                    const hasWhiteList = whiteListRegex && whiteListRegex.length > 0;
+                    const hasBlackList = blackListRegex && blackListRegex.length > 0;
 
-                    const isAllowListMode = Array.isArray(whiteList);
-                    const isBlockListMode = Array.isArray(blackList);
-
-                    // Domain Name Match Logic
-                    const matchFunction = (e) => {
-                        const e_str = e.replace(/\./g, '\\.').replace(/\*/g, '.*');
-                        const regex = new RegExp(`${e_str}|([a-z0-9]+\\.)*${e_str}`);
-                        return regex.test(host);
+                    if (hasWhiteList && hasBlackList) {
+                        return inWhiteList && !inBlackList;
                     }
 
-                    if (isAllowListMode && isBlockListMode) {
-                        const inBlackList = blackList.find(matchFunction);
-                        const inWhiteList = whiteList.find(matchFunction);
-                        return !inBlackList || inWhiteList;
+                    if (hasWhiteList) {
+                        return inWhiteList;
                     }
 
-                    if (isAllowListMode) {
-                        return whiteList.find(matchFunction);
+                    if (hasBlackList) {
+                        return !inBlackList;
                     }
 
-                    if (isBlockListMode) {
-                        return !blackList.find(matchFunction);
-                    }
-
+                    return true;
                 }
 
                 /**
@@ -54,23 +69,19 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                  * @returns {*}
                  */
                 function replaceUrl(text) {
-                    return text.replace(/href="([^"#]+)(#[^"]+)?"/g, (originText, url, hashtag) => {
+                    if (!text) return text;
 
-                        const redirectToo = redirectUrl ? redirectUrl : `${ctx.protocol}://${ctx.host}/api/redirect`;
+                    const redirectToo = INTERCEPTOR_REDIRECT_URL || redirectUrl || `${ctx.protocol}://${ctx.host}/api/redirect`;
 
-                        const encodeFuncc = encodeFunc ? encodeFunc : (url) => {
-                            return 'url=' + encodeURIComponent(url);
+                    return text.replace(/href="([^"#]+)(#[^"]+)?"/g, (hrefText, url, hashtag) => {
+
+                        if (isAllowedUrl(url)) {
+                            return hrefText;
                         }
 
-                        if (isDisallowedUrl(url)) {
-                            return originText;
-                        }
+                        const finalHashtag = hashtag || "";
 
-                        if (hashtag === undefined) {
-                            hashtag = "";
-                        }
-
-                        return `href="${redirectToo}?${encodeFuncc(url + hashtag)}"`;
+                        return `href="${redirectToo}?${activeEncodeFunc(url + finalHashtag)}"`;
                     });
                 }
 
@@ -98,16 +109,13 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                         return "";
                     }
 
-                    if (isDisallowedUrl(link)) {
+                    if (isAllowedUrl(link)) {
                         return link;
                     }
 
-                    const redirectToo = redirectUrl ? redirectUrl : `${ctx.protocol}://${ctx.host}/api/redirect`;
+                    const redirectToo = INTERCEPTOR_REDIRECT_URL || redirectUrl || `${ctx.protocol}://${ctx.host}/api/redirect`;
 
-                    const encodeFuncc = encodeFunc ? encodeFunc : (url) => {
-                        return 'url=' + encodeURIComponent(url);
-                    }
-                    return `${redirectToo}?${encodeFuncc(link)}`;
+                    return `${redirectToo}?${activeEncodeFunc(link)}`;
                 }
 
 
@@ -131,8 +139,10 @@ module.exports = function ({whiteList, blackList, interceptorTemplate, redirectU
                 await next();
             },
             async (ctx, next) => {
+                const {INTERCEPTOR_TEMPLATE} = process.env;
+
                 function outputHtml(url) {
-                    const template = interceptorTemplate || `<!DOCTYPE html><html lang="zh-CN"><head><title>Redirect to third party website</title></head><body data-url="__URL__"><p>Redirecting to __URL__</p><script>location.href = document.body.getAttribute('data-url');</script></body></html>`;
+                    const template = INTERCEPTOR_TEMPLATE || interceptorTemplate || `<!DOCTYPE html><html lang='zh-CN'><head><title>Redirect to third party website</title></head><body data-url='__URL__'><p>Redirecting to __URL__</p><script>location.href = document.body.getAttribute('data-url');</script></body></html>`;
                     return template.replace(/__URL__/g, () => url);
                 }
 

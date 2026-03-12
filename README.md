@@ -39,8 +39,8 @@ module.exports = Waline({
 Options:
 - `whiteList` (optional): List of allowed domains and subdomains.
 - `blackList` (optional): List of disallowed domains and subdomains.
-- `interceptorTemplate` (optional): Html template of the middle page.
-- `redirectUrl` (optional): The url of the middle page.
+- `interceptorTemplate` (optional): Html template of the middle page. You can also set it in environment variable `INTERCEPTOR_TEMPLATE`.
+- `redirectUrl` (optional): The url of the middle page. You can also set it in environment variable `INTERCEPTOR_REDIRECT_URL`.
 - `encodeFunc` (optional): Encoding function of external link.
 
 Example: If the url of the middle page is `https://example.com/go.html?u=https://external-link.com`, the options will be:
@@ -56,6 +56,8 @@ LinkInterceptor({
     }
 })
 ```
+
+Environment variables have higher priority than options in the plugin. If you deploy your Waline on Vercel, redeploy it after changing environment variables.
 
 More instructions can be seen on [this article](https://uuanqin.top/p/e1ee5eca/) (Chinese).
 
